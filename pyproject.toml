@@ -1,0 +1,23 @@
+[project]
+name = "UIE"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "einops>=0.8.2",
+    "mamba-ssm",
+    "ruff>=0.15.12",
+    "torch==2.10",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128" },
+]
+mamba-ssm = { url = "https://github.com/state-spaces/mamba/releases/download/v2.3.1/mamba_ssm-2.3.1+cu12torch2.10cxx11abiTRUE-cp312-cp312-linux_x86_64.whl" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
