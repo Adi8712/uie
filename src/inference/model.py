@@ -124,7 +124,7 @@ class MemoryBlock(nn.Module):
         return g
 
 
-class SS_UIE_model(nn.Module):
+class model(nn.Module):
     def __init__(self, c=32, nm=3, nr=3, H=256, W=256):
         super().__init__()
         self.e1 = nn.Sequential(
