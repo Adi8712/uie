@@ -13,7 +13,8 @@ DATA_DIR = pathlib.Path(__file__).resolve().parent.parent.parent / "data"
 engine = Engine()
 
 vid_path = DATA_DIR / "input.mp4"
-out_path = DATA_DIR / "output.mp4"
+# out_path = DATA_DIR / "original.mp4"
+out_path = DATA_DIR / "new.mp4"
 
 cap = cv2.VideoCapture(str(vid_path))
 

@@ -1,9 +1,11 @@
 import cv2
 import torch
 
+# from .original import SS_UIE_model as model
 from .model import model
 
 SIZE = 256
+# WGT = "models/original.pth"
 WGT = "models/weights.pth"
 
 
@@ -14,9 +16,16 @@ class Engine:
             torch.backends.cudnn.benchmark = True
 
         self.h = self.w = SIZE
-        self.model = model().to(self.device)
-        _state = torch.load(WGT, map_location=self.device)
-        self.model.load_state_dict(_state)
+        self.model = model(
+            # in_channels=3, channels=16, num_resblock=4, num_memblock=4
+        ).to(self.device)
+        self.model.load_state_dict(
+            {
+                k.replace("module.", ""): v
+                for k, v in torch.load(WGT, map_location=self.device).items()
+            },
+            strict=False,
+        )
         self.model.eval()
 
     def process(self, frame):
