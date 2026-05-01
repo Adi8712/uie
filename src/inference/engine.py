@@ -10,7 +10,7 @@ WGT = "models/weights.pth"
 
 
 class Engine:
-    def __init__(self) -> None:
+    def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         if self.device == "cuda":
             torch.backends.cudnn.benchmark = True
@@ -27,19 +27,35 @@ class Engine:
             strict=False,
         )
         self.model.eval()
+        self.starter = torch.cuda.Event(enable_timing=True)
+        self.ender = torch.cuda.Event(enable_timing=True)
 
-    def process(self, frame):
+    def process(self, frame, profile=False):
         h, w = frame.shape[:2]
-        frame_rgb = cv2.cvtColor(cv2.resize(frame, (self.w, self.h)), cv2.COLOR_BGR2RGB)
 
-        x = torch.from_numpy(frame_rgb).float() / 255.0
-        x = x.permute(2, 0, 1).unsqueeze(0).to(self.device)
+        frame = cv2.resize(frame, (self.w, self.h))
 
-        with torch.inference_mode():
-            y = self.model(x).squeeze(0)
-            y = torch.clamp(y, 0, 1)
-            y = (y.permute(1, 2, 0) * 255).byte().cpu().numpy()
+        x = torch.from_numpy(frame).to(self.device, non_blocking=True)
+        x = x.permute(2, 0, 1).unsqueeze(0).float()
+        x = x[:, [2, 1, 0]].mul_(1.0 / 255.0)
 
-        out = cv2.cvtColor(cv2.resize(y, (w, h)), cv2.COLOR_RGB2BGR)
+        with torch.inference_mode(), torch.autocast(device_type="cuda"):
+            if profile:
+                self.starter.record()
 
-        return out
+            y = self.model(x)
+
+            if profile:
+                self.ender.record()
+
+        y = y[0].permute(1, 2, 0)
+        y = (y * 255).clamp(0, 255).to(torch.uint8).cpu().numpy()
+
+        y = cv2.resize(y, (w, h))
+
+        if profile:
+            torch.cuda.synchronize()
+            dt = self.starter.elapsed_time(self.ender) / 1000.0
+            return y[:, :, ::-1], dt
+
+        return y[:, :, ::-1]
